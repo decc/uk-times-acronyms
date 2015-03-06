@@ -1,11 +1,12 @@
 <html>
 <head>
-  <title>UK TIMES Acronyms</title>
+  <title>UK TIMES Codes &amp; Acronyms</title>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
   <meta charset="utf-8">
   <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
   <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>
   <script src="d3.min.js"></script>
+  <script src="lunr.min.js"></script>
   <style>
     body {
       margin: 50px;
@@ -32,6 +33,23 @@
       display: none;
     }
 
+    .filter .record {
+      display: none;
+    }
+
+    .filter .record.show {
+      display: table-row;;
+    }
+
+    #showall {
+      display: none;
+    }
+
+    .filter #showall {
+      display: inline;
+    }
+      
+
   </style>
   </head>
   <body class='signedout'>
@@ -39,7 +57,7 @@
   <p id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms relating to UK TIMES</p>
   <p id='signoutmessage'><a href='/' id='signout'>Sign out<a/></p>
 
-  <input type='text' id='filter' placeholder='search'>
+      <input type='text' id='filter' placeholder='search'>&nbsp;<a href='/' id='showall'>show all</a>
 
   <table id='acronyms'>
     <thead>
@@ -66,6 +84,15 @@
 <script>
   var database = new Firebase("https://uk-times-acronyms.firebaseio.com/");
   var records = d3.map(); // We keep a local copy of everything
+  var ids_to_display = [];
+
+  // For searching
+  var index = lunr(function () {
+    this.field('acronym', {boost: 10})
+    this.field('alias', {boost: 5})
+    this.field('description')
+    this.ref('key')
+  })
 
   var update = function() {
     var r, new_record, new_controls;
@@ -145,6 +172,7 @@
     var record = snapshot.val();
     record.key = snapshot.key();
     records.set(record.key, record);
+    index.add(record);
     update();
   });
 
@@ -152,10 +180,12 @@
     var record = snapshot.val();
     record.key = snapshot.key();
     records.set(record.key, record);
+    index.update(record);
     update();
   });
 
   database.on("child_removed", function(snapshot) {
+    index.remove(records.get(snapshot.key()));
     records.remove(snapshot.key());
     update();
   });
@@ -178,8 +208,28 @@
       });
 
   d3.select("#signout").on('click', function() { database.unauth() });
-  
 
+  d3.select("#filter").on('keyup', function() { 
+      var term = d3.select("#filter").node().value;
+      console.log(term, index.search(term));
+      if(term.length < 3) {
+        d3.select("body").classed('filter', false);
+        d3.selectAll(".record.show").classed('show', false);
+      } else {
+        d3.select("body").classed('filter', true);
+        d3.selectAll(".record.show").classed('show', false);
+        index.search(term).forEach(function(result) {
+          d3.select("#"+result.ref).classed('show', true);
+        });
+      }
+  });
+
+  d3.select('#showall').on('click', function() {  
+    d3.select("body").classed('filter', false);
+    d3.selectAll(".record.show").classed('show', false);
+    d3.select("#filter").node().value = "";
+    event.preventDefault();
+  });
 </script>
 
   </body>
