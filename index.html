@@ -39,6 +39,8 @@
   <p id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms relating to UK TIMES</p>
   <p id='signoutmessage'><a href='/' id='signout'>Sign out<a/></p>
 
+  <input type='text' id='filter' placeholder='search'>
+
   <table id='acronyms'>
     <thead>
     <tr id='headings'>
@@ -63,30 +65,43 @@
   </table>
 <script>
   var database = new Firebase("https://uk-times-acronyms.firebaseio.com/");
-  var records = [];
+  var records = d3.map(); // We keep a local copy of everything
 
   var update = function() {
-    r = d3.select("#acronyms tbody").selectAll('tr.record').data(records);
+    var r, new_record, new_controls;
 
+    r = d3.select("#acronyms tbody").selectAll('tr.record').data(records.values(), function(d) { return d.key; });
+
+    // Adding records
     new_record = r.enter().append('tr')
       .attr('id', function(d) { return d.key; })
       .attr('class', 'record');
 
-    new_record.append('td').attr('class', 'acronym').text(function(d) { return d.acronym; });
-    new_record.append('td').attr('class', 'alias').text(function(d) { return d.alias; });
-    new_record.append('td').attr('class', 'description').text(function(d) { return d.description; });
-    var controls = new_record.append('td').attr('class', 'control');
+    new_record.append('td').attr('class', 'acronym')
+    new_record.append('td').attr('class', 'alias')
+    new_record.append('td').attr('class', 'description')
+    new_controls = new_record.append('td').attr('class', 'control');
+    new_controls.append('input').attr({id: 'edit', type: 'submit', value: 'edit'}).on('click', function(d) { edit(d); });
+    new_controls.append('input').attr({id: 'delete', type: 'submit', value: 'delete'}).on('click', function(d) { maybe_delete(d); });
 
-    controls.append('input').attr({type: 'submit', value: 'edit'}).on('click', function(d) { edit(d); });
-    controls.append('input').attr({type: 'submit', value: 'delete'}).on('click', function(d) { delete(d); });
+    // Updating records
+    r.select('.acronym').text(function(d) { return d.acronym; });
+    r.select('.alias').text(function(d) { return d.alias; });
+    r.select('.description').text(function(d) { return d.description; });
 
+    // Removing records
     r.exit().remove()
 
   };
+  
+  var maybe_delete = function(d) {
+    var record = d3.select("tr.record#"+d.key);
+    record.select('input#delete').attr('value', 'Click again if you are sure you want to delete').on('click', function(d) {  database.child(d.key).remove(); });
+  }
 
   var edit = function(d) {
     var record = d3.select("tr.record#"+d.key);
-    record.select('.control input').attr('value', 'save').on('click', function(d) { save(d) });
+    record.select('.control input#edit').attr('value', 'save').on('click', function(d) { save(d) });
 
     record.select('td.acronym').text("");
     record.select('td.acronym').append('input').attr({type:'text', value: d.acronym});
@@ -110,12 +125,8 @@
     database.child(d.key).update(d);
 
     // Reset everything
-    record.select('.control input').attr('value', 'edit').on('click', function(d) { edit(d) });
+    record.select('.control input#edit').attr('value', 'edit').on('click', function(d) { edit(d) });
     record.selectAll('td.acronym input, td.alias input, td.description textarea').remove();
-    record.select('td.acronym').text(function(d) { return d.acronym});
-    record.select('td.alias').text(function(d) { return d.alias});
-    record.select('td.description').text(function(d) { return d.description});
-
   }
 
   $('#add').click(function(event) {
@@ -133,9 +144,22 @@
   database.on("child_added", function(snapshot) {
     var record = snapshot.val();
     record.key = snapshot.key();
-    records.push(record);
+    records.set(record.key, record);
     update();
   });
+
+  database.on("child_changed", function(snapshot) {
+    var record = snapshot.val();
+    record.key = snapshot.key();
+    records.set(record.key, record);
+    update();
+  });
+
+  database.on("child_removed", function(snapshot) {
+    records.remove(snapshot.key());
+    update();
+  });
+
 
   function authDataCallback(authData) {
     if (authData) {
