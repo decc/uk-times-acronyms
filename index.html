@@ -1,0 +1,162 @@
+<html>
+<head>
+  <title>UK TIMES Acronyms</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <meta charset="utf-8">
+  <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>
+  <script src="d3.min.js"></script>
+  <style>
+    body {
+      margin: 50px;
+    }
+    .record { 
+      width: 100%;
+    }
+    tr:nth-child(even) {
+      background-color: #afa;
+    }
+    th { text-align: left; }
+    td { vertical-align: top; }
+    textarea { width: 100%; height: 5em; }
+    .signedout #newrecord {
+      display: none;
+    }
+    .signedin #signinmessage {
+      display: none;
+    }
+    .signedout #signoutmessage {
+      display: none;
+    }
+    .signedout td.control {
+      display: none;
+    }
+
+  </style>
+  </head>
+  <body class='signedout'>
+  <h1>UK TIMES ACRONYMS</h1>
+  <p id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms relating to UK TIMES</p>
+  <p id='signoutmessage'><a href='/' id='signout'>Sign out<a/></p>
+
+  <table id='acronyms'>
+    <thead>
+    <tr id='headings'>
+      <th class='acronym'>Acronym</th>
+      <th class='alias'>Aliases</th>
+      <th class='description'>Description</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+
+  </tbody>
+  <tfoot>
+    <tr class='record' id='newrecord'>
+      <td class='acronym'><input class="" type="text" id="acronymInput" placeholder="The acronym"></td>
+      <td class='alias'><input class="" type="text" id="aliasInput" placeholder="Other acronyms for the same thing"></td>
+      <td class='description'><textarea class="" type="text" id="descriptionInput" placeholder="A description of the acronymn"></textarea></td>
+      <td class='control'><input type='submit' id='add' value='add'></td>
+    </tr>
+  </tfoot>
+
+  </table>
+<script>
+  var database = new Firebase("https://uk-times-acronyms.firebaseio.com/");
+  var records = [];
+
+  var update = function() {
+    r = d3.select("#acronyms tbody").selectAll('tr.record').data(records);
+
+    new_record = r.enter().append('tr')
+      .attr('id', function(d) { return d.key; })
+      .attr('class', 'record');
+
+    new_record.append('td').attr('class', 'acronym').text(function(d) { return d.acronym; });
+    new_record.append('td').attr('class', 'alias').text(function(d) { return d.alias; });
+    new_record.append('td').attr('class', 'description').text(function(d) { return d.description; });
+    var controls = new_record.append('td').attr('class', 'control');
+
+    controls.append('input').attr({type: 'submit', value: 'edit'}).on('click', function(d) { edit(d); });
+    controls.append('input').attr({type: 'submit', value: 'delete'}).on('click', function(d) { delete(d); });
+
+    r.exit().remove()
+
+  };
+
+  var edit = function(d) {
+    var record = d3.select("tr.record#"+d.key);
+    record.select('.control input').attr('value', 'save').on('click', function(d) { save(d) });
+
+    record.select('td.acronym').text("");
+    record.select('td.acronym').append('input').attr({type:'text', value: d.acronym});
+
+    record.select('td.alias').text("");
+    record.select('td.alias').append('input').attr({type:'text', value: d.alias});
+
+    record.select('td.description').text("");
+    record.select('td.description').append('textarea').attr({type:'text'}).text(function(d) { return d.description; });
+  }
+
+  var save = function(d) {
+    var record = d3.select("tr.record#"+d.key);
+
+    // Get the updated data
+    d.acronym = record.select('td.acronym input').node().value;
+    d.alias = record.select('td.alias input').node().value;
+    d.description = record.select('td.description textarea').node().value;
+
+    // Save it
+    database.child(d.key).update(d);
+
+    // Reset everything
+    record.select('.control input').attr('value', 'edit').on('click', function(d) { edit(d) });
+    record.selectAll('td.acronym input, td.alias input, td.description textarea').remove();
+    record.select('td.acronym').text(function(d) { return d.acronym});
+    record.select('td.alias').text(function(d) { return d.alias});
+    record.select('td.description').text(function(d) { return d.description});
+
+  }
+
+  $('#add').click(function(event) {
+      var acronym = $('#acronymInput').val();
+      var alias = $('#aliasInput').val();
+      var description = $('#descriptionInput').val();
+      var record = {acronym: acronym, alias: alias, description: description};
+      database.push(record);
+      $('#acronymInput').val("");
+      $('#aliasInput').val("");
+      $('#descriptionInput').val("");
+      event.preventDefault();
+  });
+
+  database.on("child_added", function(snapshot) {
+    var record = snapshot.val();
+    record.key = snapshot.key();
+    records.push(record);
+    update();
+  });
+
+  function authDataCallback(authData) {
+    if (authData) {
+      d3.select("body").classed('signedout', false);
+      d3.select("body").classed('signedin', true);
+    } else {
+      d3.select("body").classed('signedout', true);
+      d3.select("body").classed('signedin', false);
+    }
+  }
+  database.onAuth(authDataCallback);
+
+  $("#signin").click(function(event) { 
+      database.authWithOAuthRedirect("github", function(error) { console.log(error); });
+      event.preventDefault();
+      });
+
+  d3.select("#signout").on('click', function() { database.unauth() });
+  
+
+</script>
+
+  </body>
+</html>
