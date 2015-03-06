@@ -4,7 +4,6 @@
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
   <meta charset="utf-8">
   <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
-  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>
   <script src="d3.min.js"></script>
   <script src="lunr.min.js"></script>
   <style>
@@ -33,12 +32,16 @@
       display: none;
     }
 
+    #filter {
+      width: 20em;
+    }
+
     .filter .record {
       display: none;
     }
 
     .filter .record.show {
-      display: table-row;;
+      display: table-row;
     }
 
     #showall {
@@ -53,11 +56,13 @@
   </style>
   </head>
   <body class='signedout'>
-  <h1>UK TIMES ACRONYMS</h1>
-  <p id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms relating to UK TIMES</p>
-  <p id='signoutmessage'><a href='/' id='signout'>Sign out<a/></p>
+  <h1>UK TIMES Codes &amp; Acronyms</h1>
+  <p>This is a (partial) list of codes and acronyms used in the UK version of the TIMES energy model.
+  <span id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms.</span>
+  <span id='signoutmessage'>You are signed in, so you can add or edit acronyms. <a href='/' id='signout'>Sign out<a/>.</span>
+  </p>.
 
-      <input type='text' id='filter' placeholder='search'>&nbsp;<a href='/' id='showall'>show all</a>
+  <input type='text' id='filter' placeholder='search'>&nbsp;<a href='/' id='showall'>show all</a>
 
   <table id='acronyms'>
     <thead>
@@ -81,6 +86,7 @@
   </tfoot>
 
   </table>
+
 <script>
   var database = new Firebase("https://uk-times-acronyms.firebaseio.com/");
   var records = d3.map(); // We keep a local copy of everything
@@ -156,16 +162,16 @@
     record.selectAll('td.acronym input, td.alias input, td.description textarea').remove();
   }
 
-  $('#add').click(function(event) {
-      var acronym = $('#acronymInput').val();
-      var alias = $('#aliasInput').val();
-      var description = $('#descriptionInput').val();
-      var record = {acronym: acronym, alias: alias, description: description};
-      database.push(record);
-      $('#acronymInput').val("");
-      $('#aliasInput').val("");
-      $('#descriptionInput').val("");
-      event.preventDefault();
+  d3.select('#add').on('click', function() {
+    var acronym = d3.select('#acronymInput').node().value;
+    var alias = d3.select('#aliasInput').node().value;
+    var description = d3.select('#descriptionInput').node().value;
+    var record = {acronym: acronym, alias: alias, description: description};
+    database.push(record);
+    d3.select('#acronymInput').node().value = "";
+    d3.select('#aliasInput').node().value = "";
+    d3.select('#descriptionInput').node().value = "";
+    d3.event.preventDefault();
   });
 
   database.on("child_added", function(snapshot) {
@@ -202,9 +208,9 @@
   }
   database.onAuth(authDataCallback);
 
-  $("#signin").click(function(event) { 
+  d3.select("#signin").on('click', function() { 
       database.authWithOAuthRedirect("github", function(error) { console.log(error); });
-      event.preventDefault();
+      d3.event.preventDefault();
       });
 
   d3.select("#signout").on('click', function() { database.unauth() });
@@ -228,7 +234,7 @@
     d3.select("body").classed('filter', false);
     d3.selectAll(".record.show").classed('show', false);
     d3.select("#filter").node().value = "";
-    event.preventDefault();
+    d3.event.preventDefault();
   });
 </script>
 
