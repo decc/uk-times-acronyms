@@ -9,9 +9,16 @@
   <style>
     body {
       margin: 50px;
+      font: sans-serif;
+    }
+    table {
+      width: 100%;
     }
     .record { 
       width: 100%;
+    }
+    input {
+      margin: 0;
     }
     tr:nth-child(even) {
       background-color: #afa;
@@ -33,7 +40,9 @@
     }
 
     #filter {
-      width: 20em;
+      font-size: 150%;
+      padding: 10px;
+      width: 75%;
     }
 
     .filter .record {
@@ -59,10 +68,10 @@
   <h1>UK TIMES Codes &amp; Acronyms</h1>
   <p>This is a (partial) list of codes and acronyms used in the UK version of the TIMES energy model.
   <span id='signinmessage'>Please <a href='/' id='signin'>sign in</a> to edit or add acronyms.</span>
-  <span id='signoutmessage'>You are signed in, so you can add or edit acronyms. <a href='/' id='signout'>Sign out<a/>.</span>
-  </p>.
+  <span id='signoutmessage'>You are signed in, so you can add or edit acronyms. <a href='/' id='signout'>Sign out</a>.</span>
+  </p>
 
-  <input type='text' id='filter' placeholder='search'>&nbsp;<a href='/' id='showall'>show all</a>
+  <p><input type='text' id='filter' placeholder='search'>&nbsp;<a href='/' id='showall'>show all</a></p>
 
   <table id='acronyms'>
     <thead>
