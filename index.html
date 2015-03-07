@@ -104,7 +104,7 @@ textarea { width: 100%; height: 5em; font-size: 14px;}
 <body class='signedout'> <!-- This will have the class .signedin applied when the user is logged in -->
 
 <div id='header'>
-  <input type='text' id='filter' placeholder='Search...'><a href='/' id='showall'><img src='cross.png'></a>
+  <input type='text' id='filter' placeholder='Search...' autocomplete='off' autofocus><a href='/' id='showall'><img src='cross.png'></a>
   <span id='signinmessage'><a href='/' id='signin'>Sign in</a> to edit</span>
   <span id='signoutmessage'><a href='/' id='signout'>Sign out</a></span>
   <h1>UK TIMES CODES &amp; ACRONYMS</h1>
@@ -204,14 +204,22 @@ database.on("child_removed", function(snapshot) {
     draw_table();
     });
 
+// Used to sort two records in the data
+var sort = function(a, b) {
+  if(a.acronym.toLowerCase() == b.acronym.toLowerCase()) { return 0; }
+  return (a.acronym.toLowerCase() < b.acronym.toLowerCase() ? -1 : 1);
+}
+
 // This fills out the table so that it matches the contents of the records map
 // We use d3, see http://d3js.org/
 var draw_table = function() {
   var r, new_record, new_controls;
+  var data = records.values().sort(sort);
   
   // Select all rows in the table and compare it with the records set
   r = d3.select("#acronyms tbody").selectAll('tr.record')
-    .data(records.values(), function(d) { return d.key; });
+    .data(data, function(d) { return d.key; })
+    .order();
 
   // Add a row for anything that is in records but not yet drawn
   new_record = r.enter().append('tr')
@@ -266,6 +274,9 @@ d3.select('#add').on('click', function() {
 
 // This wires up the search box
 d3.select("#filter").on('keyup', function() { 
+    // Clear the search if the user presses escape
+    if(d3.event.keyCode == 27) { clear_filter(); return; }
+
     // Get the search term the user has input
     var term = d3.select("#filter").node().value;
     if(term.length < 3) {
@@ -288,7 +299,9 @@ d3.select("#filter").on('keyup', function() {
     });
 
 // This wires up the 'cross' on the search box
-d3.select('#showall').on('click', function() {  
+d3.select('#showall').on('click', clear_filter);
+
+var clear_filter = function() {  
     // THis has the effect of showing all the table rows
     d3.select("body").classed('filter', false);
     // This undoes the effect of the search
@@ -296,7 +309,7 @@ d3.select('#showall').on('click', function() {
     // This clears the search box
     d3.select("#filter").node().value = "";
     d3.event.preventDefault();
-    });
+    };
 
 // This is used to reset the are you sure about deleting button if the user does nothing
 var delete_timeout;
