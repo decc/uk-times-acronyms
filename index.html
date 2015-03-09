@@ -216,7 +216,7 @@ var sortRecord = function(a, b) {
 // We use d3, see http://d3js.org/
 var draw_table = function() {
   var r, new_record, new_controls;
-  var data = records.values().sort(sortRecord);
+  var data = records.values(); //records.values().sort(sortRecord);
   
   // Select all rows in the table and compare it with the records set
   r = d3.select("#acronyms tbody").selectAll('tr.record')
