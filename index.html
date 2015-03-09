@@ -66,7 +66,7 @@ h1 {
 /* The main results table */
 #content { margin: 80px 20px 100px 20px; }
 table { width: 100%; } 
-tr.record:nth-child(even) { background-color: #e4ca00; }
+tr:nth-child(even) { background-color: #e4ca00; }
 th { 
   text-align: left; 
   color: #ff4c00;
@@ -78,9 +78,11 @@ td {
   padding: 1px;
 }
 input { margin: 0; font-size: 14px; }
-textarea { width: 98%; height: 5em; font-size: 14px;}
-.alias input, .acronym input {
+.alias input, .acronym input, .description input {
   width: 98%;
+}
+td.control {
+  width: 100px;
 }
 
 /* We show and hide parts based on whether we are logged in */
@@ -124,20 +126,16 @@ textarea { width: 98%; height: 5em; font-size: 14px;}
       <th class='description'>Description</th>
       <th class='control'>Controls</th><!-- This column will have controls, if the user is logged in -->
     </tr>
+    <!-- This is for adding new acronyms to the dtabase -->
+    <tr class='show' id='newrecord'>
+      <td class='acronym'><input class="" type="text" id="acronymInput" placeholder="A new acronym"></td>
+      <td class='alias'><input class="" type="text" id="aliasInput" placeholder="Other acronyms for the same thing"></td>
+      <td class='description'><input type="text" class="" type="text" id="descriptionInput" placeholder="A description of the acronymn"></textarea></td>
+      <td class='control'><input type='submit' id='add' value='add'></td>
+    </tr>
   </thead>
 
   <tbody> <!-- The records will be added here from the database --> </tbody>
-
-  <tfoot><!-- This is for adding new acronyms to the dtabase -->
-    <tr><td>&nbsp;</td></tr>
-    <tr><th colspan='4'>Add an acronym</th></tr>
-    <tr class='show' id='newrecord'>
-      <td class='acronym'><input class="" type="text" id="acronymInput" placeholder="The acronym"></td>
-      <td class='alias'><input class="" type="text" id="aliasInput" placeholder="Other acronyms for the same thing"></td>
-      <td class='description'><textarea class="" type="text" id="descriptionInput" placeholder="A description of the acronymn"></textarea></td>
-      <td class='control'><input type='submit' id='add' value='add'></td>
-    </tr>
-  </tfoot>
 </table>
 
 <p id='footer'>This code is &copy; 2015 <a href='http://tom.counsell.org'>Tom Counsell</a> and available from <a href='https://github.com/decc/uk-times-acronyms'>https://github.com/decc/uk-times-acronyms</a> under an <a href='https://github.com/decc/uk-times-acronyms/blob/master/LICENSE'>MIT open source license</a>.</p>
@@ -155,6 +153,7 @@ var index = lunr(function () {
     this.field('alias', {boost: 5});
     this.field('description');
     this.ref('key');
+    this.pipeline.reset();
     })
 
 // This method is called when a user logs in or out
@@ -205,6 +204,7 @@ database.on("child_removed", function(snapshot) {
     // We redraw the table
     draw_table();
     });
+
 
 // Used to sort two records in the data
 var sortRecord = function(a, b) {
@@ -301,7 +301,7 @@ d3.select("#filter").on('keyup', function() {
     });
 
 // This wires up the 'cross' on the search box
-d3.select('#showall').on('click', clear_filter);
+d3.select('#showall').on('click', function() { clear_filter(); d3.event.preventDefault(); return; });
 
 var clear_filter = function() {  
     // THis has the effect of showing all the table rows
@@ -354,7 +354,7 @@ var edit = function(d) {
   record.select('td.alias').append('input').attr({type:'text', value: d.alias});
 
   record.select('td.description').text("");
-  record.select('td.description').append('textarea').attr({type:'text'}).text(function(d) { return d.description; });
+  record.select('td.description').append('input').attr({type:'text', value: d.description });
 }
 
 // This wires up the save button
@@ -365,7 +365,7 @@ var save = function(d) {
   // Get the updated data from the form
   d.acronym = record.select('td.acronym input').node().value;
   d.alias = record.select('td.alias input').node().value;
-  d.description = record.select('td.description textarea').node().value;
+  d.description = record.select('td.description input').node().value;
 
   // Save it
   database.child(d.key).update(d);
@@ -374,7 +374,7 @@ var save = function(d) {
   record.select('.control input#edit').attr('value', 'edit').on('click', function(d) { edit(d) });
 
   // Remove the form
-  record.selectAll('td.acronym input, td.alias input, td.description textarea').remove();
+  record.selectAll('td.acronym input, td.alias input, td.description input').remove();
 }
 
 </script>
