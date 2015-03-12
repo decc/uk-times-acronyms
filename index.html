@@ -114,8 +114,6 @@ td.control {
 </div>
 
 <div id='content'>
-</p>
-
 
 <table id='acronyms'>
   <thead>
@@ -261,7 +259,7 @@ var draw_table = function() {
 // These wire up the next and previous buttons
 d3.select("#next").on('click', function() {
     record_to_start_at = record_to_start_at + records_per_page;
-    if(record_to_start_at > records.size()) {
+    if(record_to_start_at >= records.size()) {
       record_to_start_at = 0;
       }
     draw_table();
