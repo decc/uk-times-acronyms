@@ -93,10 +93,9 @@ td.control {
 .signedout tr#newrecord { display: none; }
 
 /* We show and hide records based on the user's search */
-.filter .record { display: none; }
-.filter .record.show { display: table-row; }
 #showall { display: none; position: fixed; right: 24px; top: 8px;  }
 .filter #showall { display: inline; }
+.filter #pagination { display: none; }
 
 /* The bottom section */
 #footer {
@@ -137,6 +136,11 @@ td.control {
 
   <tbody> <!-- The records will be added here from the database --> </tbody>
 </table>
+<div id='pagination'>
+  <a href='/' id='previous'>Previous records</a>
+  <a href='/' id='next'>Next records</a>
+</div>
+
 
 <p id='footer'>This code is &copy; 2015 <a href='http://tom.counsell.org'>Tom Counsell</a> and available from <a href='https://github.com/decc/uk-times-acronyms'>https://github.com/decc/uk-times-acronyms</a> under an <a href='https://github.com/decc/uk-times-acronyms/blob/master/LICENSE'>MIT open source license</a>.</p>
 
@@ -145,6 +149,9 @@ td.control {
 <script>
 var database = new Firebase("https://uk-times-acronyms.firebaseio.com/"); // Change this if you are forking the code
 var records = d3.map(); // We keep a local copy of everything
+var records_to_show = undefined;
+var record_to_start_at = 0;
+var records_per_page = 20;
 
 // We create a searchable index of all the records
 // See http://lunrjs.com
@@ -215,8 +222,12 @@ var sortRecord = function(a, b) {
 // This fills out the table so that it matches the contents of the records map
 // We use d3, see http://d3js.org/
 var draw_table = function() {
-  var r, new_record, new_controls;
-  var data = records.values(); //records.values().sort(sortRecord);
+  var r, new_record, new_controls, data;
+  if(records_to_show == undefined) {
+    data = records.values().slice(record_to_start_at, record_to_start_at + records_per_page);
+  } else {
+    data = records_to_show;
+  }
   
   // Select all rows in the table and compare it with the records set
   r = d3.select("#acronyms tbody").selectAll('tr.record')
@@ -247,10 +258,31 @@ var draw_table = function() {
   r.exit().remove()
 };
 
+// These wire up the next and previous buttons
+d3.select("#next").on('click', function() {
+    record_to_start_at = record_to_start_at + records_per_page;
+    if(record_to_start_at > records.size()) {
+      record_to_start_at = 0;
+      }
+    draw_table();
+    d3.event.preventDefault();
+    });
+
+d3.select("#previous").on('click', function() {
+    record_to_start_at = record_to_start_at - records_per_page;
+    if(record_to_start_at < 0) {
+      record_to_start_at = records.size()-records_per_page;
+      }
+    draw_table();
+    d3.event.preventDefault();
+    });
+
+
 // This wires up the signin link
 // We take advantage of the firebase.com database authentication system
 d3.select("#signin").on('click', function() { 
     database.authWithOAuthRedirect("github", function(error) { console.log(error); });
+    draw_table();
     d3.event.preventDefault();
     });
 
@@ -284,7 +316,8 @@ d3.select("#filter").on('keyup', function() {
     if(term.length < 3) {
       // If the search term is empty or short, show everything
       d3.select("body").classed('filter', false);
-      d3.selectAll(".record.show").classed('show', false);
+      records_to_show = undefined;
+      draw_table();
     } else {
       // Otherwise, change a class to signal we are filtering the results
       // This hides all rows in the table that don't have a 'show' class
@@ -293,10 +326,12 @@ d3.select("#filter").on('keyup', function() {
       d3.selectAll(".record.show").classed('show', false);
       // Then look through the results and give each of the found
       // results a 'show' filter
+      records_to_show = [];
       index.search(term).forEach(function(result) {
-        d3.select("#"+result.ref).classed('show', true);
+        records_to_show.push(records.get(result.ref));
         });
       }
+      draw_table();
     d3.event.preventDefault();
     });
 
@@ -307,9 +342,11 @@ var clear_filter = function() {
     // THis has the effect of showing all the table rows
     d3.select("body").classed('filter', false);
     // This undoes the effect of the search
-    d3.selectAll(".record.show").classed('show', false);
+    records_to_show = undefined;
     // This clears the search box
     d3.select("#filter").node().value = "";
+    // This redraws the table
+    draw_table();
     d3.event.preventDefault();
     };
 
