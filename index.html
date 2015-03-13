@@ -301,6 +301,9 @@ d3.select('#add').on('click', function() {
     d3.select('#acronymInput').node().value = "";
     d3.select('#aliasInput').node().value = "";
     d3.select('#descriptionInput').node().value = "";
+    // But also filter so record appears
+    d3.select("#filter").node().value = acronym; // Set the filter input box
+    d3.select("#filter").on("keyup")(); // Trigger the filter
     d3.event.preventDefault();
     });
 
@@ -359,8 +362,15 @@ var maybe_delete = function(d) {
   record.select('input#delete')
     .attr('value', 'Click again if you are sure you want to delete')
     .on('click', function(d) { 
-        window.clearTimeout(delete_timeout); 
+        window.clearTimeout(delete_timeout);
+        // We do this in order to clear the search if we have just found this record
+        d = records.get(d.key);
+        if(d.acronym == d3.select("#filter").node().value) {
+          d3.select("#filter").node().value = "";
+        }
+        // This removes any record
         database.child(d.key).remove(); 
+        d3.select("#filter").on("keyup")(); // Need to re-trigger any filters
     });
   // Set a timeout to revert the control back to normal if the user doesn't confirm withing 4 seconds
   delete_timeout = window.setTimeout(function() { 
