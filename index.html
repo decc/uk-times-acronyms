@@ -9,420 +9,110 @@
 <script src="d3.min.js"></script> <!-- From http://d3js.org/ -->
 <script src="lunr.min.js"></script> <!-- From http://lunrjs.com -->
 <style>
-body {
-  margin: 0;
-  padding: 0;
-  font: 14px/1.2 sans-serif;
-  background: #ffe200;
-  color: #000;
-}
-
-a, a:visited {
-  color: #000;
-}
-
-/* The top section */
-#header { 
-  position: fixed;
-  top: 0;
-  left: 0;
-  padding: 0 0px 0 0px;
-  margin: 0 0 10px 0;
-  width: 100%;
-  height: 30px;
-  color: #fff;
-  border-bottom: solid 1px black;
-  box-shadow: 0px 1px 10px 1px #000;
-  background-color: #ff4c00;
-}
-#header a {
-  color: #fff;
-}
-#right {
-  float: right;
-  top: 0;
-}
-h1 { 
-  display: inline-block;
-  height: 30px;
-  margin: 7px 0px 7px 20px;
-  font-size: 16px;
-}
-#filter {
-  background: url('search.png') #fff no-repeat 2px 2px;
-  margin: 1px 20px 1px 0px;
-  height: 14px;
-  float: right;
-  color: #000;
-  padding: 5px 5px 5px 25px;
-  width: 30%;
-}
-#signinmessage, #signoutmessage {
-  height: 30px;
-  margin: 7px 20px 7px 0px;
-  float: right;
-}
-
-/* The main results table */
-#content { margin: 80px 20px 100px 20px; }
-table { width: 100%; } 
-tr:nth-child(even) { background-color: #e4ca00; }
-th { 
-  text-align: left; 
-  color: #ff4c00;
-  font-variant: small-caps;
-  border-bottom: solid 1px #ff4c00;
-}
-td { 
-  vertical-align: top; 
-  padding: 1px;
-}
-input { margin: 0; font-size: 14px; }
-.alias input, .acronym input, .description input {
-  width: 98%;
-}
-td.control {
-  width: 100px;
-}
-
-/* We show and hide parts based on whether we are logged in */
-.signedin #signinmessage { display: none; }
-.signedout #signoutmessage { display: none; }
-.signedout td.control { display: none; } 
-.signedout th.control { display: none; } 
-.signedout tr#newrecord { display: none; }
-
-/* We show and hide records based on the user's search */
-#showall { display: none; position: fixed; right: 24px; top: 8px;  }
-.filter #showall { display: inline; }
-.filter #pagination { display: none; }
-
-/* The bottom section */
-#footer {
-  margin-top: 50px;
-  color: #ff4c00;
-}
-</style>
-</head>
-<body class='signedout'> <!-- This will have the class .signedin applied when the user is logged in -->
-
-<div id='header'>
-  <input type='text' id='filter' placeholder='Search...' autocomplete='off' autofocus><a href='/' id='showall'><img src='cross.png'></a>
-  <span id='signinmessage'><a href='/' id='signin'>Sign in</a> to edit</span>
-  <span id='signoutmessage'><a href='/' id='signout'>Sign out</a></span>
-  <h1>UK TIMES CODES &amp; ACRONYMS</h1>
-</div>
-
-<div id='content'>
-
-<table id='acronyms'>
-  <thead>
-    <tr id='headings'>
-      <th class='acronym'>Acronym</th>
-      <th class='alias'>Aliases</th><!-- Aliases are other acronyms with the same description -->
-      <th class='description'>Description</th>
-      <th class='control'>Controls</th><!-- This column will have controls, if the user is logged in -->
-    </tr>
-    <!-- This is for adding new acronyms to the dtabase -->
-    <tr class='show' id='newrecord'>
-      <td class='acronym'><input class="" type="text" id="acronymInput" placeholder="A new acronym"></td>
-      <td class='alias'><input class="" type="text" id="aliasInput" placeholder="Other acronyms for the same thing"></td>
-      <td class='description'><input type="text" class="" type="text" id="descriptionInput" placeholder="A description of the acronymn"></textarea></td>
-      <td class='control'><input type='submit' id='add' value='add'></td>
-    </tr>
-  </thead>
-
-  <tbody> <!-- The records will be added here from the database --> </tbody>
-</table>
-<div id='pagination'>
-  <a href='/' id='previous'>Previous records</a>
-  <a href='/' id='next'>Next records</a>
-</div>
-
-
-<p id='footer'>This code is &copy; 2015 <a href='http://tom.counsell.org'>Tom Counsell</a> and available from <a href='https://github.com/decc/uk-times-acronyms'>https://github.com/decc/uk-times-acronyms</a> under an <a href='https://github.com/decc/uk-times-acronyms/blob/master/LICENSE'>MIT open source license</a>.</p>
-
-</div>
-
-<script>
-var database = new Firebase("https://uk-times-acronyms.firebaseio.com/"); // Change this if you are forking the code
-var records = d3.map(); // We keep a local copy of everything
-var records_to_show = undefined;
-var record_to_start_at = 0;
-var records_per_page = 20;
-
-// We create a searchable index of all the records
-// See http://lunrjs.com
-var index = lunr(function () {
-    this.field('acronym', {boost: 10});
-    this.field('alias', {boost: 5});
-    this.field('description');
-    this.ref('key');
-    this.pipeline.reset();
-    })
-
-// This method is called when a user logs in or out
-database.onAuth( function (authData) {
-    if (authData) {
-      // If they log in, updated the classes on the body of the html
-      // This will trigger the controls to be revealed
-      d3.select("body").classed('signedout', false);
-      d3.select("body").classed('signedin', true);
-    } else {
-      // If they log in, updated the classes on the body of the html
-      // This will trigger the controls to be hidden
-      d3.select("body").classed('signedout', true);
-      d3.select("body").classed('signedin', false);
-    }
-    });
-
-// This method is called anytime something is added to the database
-database.on("child_added", function(snapshot) {
-    // We make a local copy of the new data
-    var record = snapshot.val();
-    record.key = snapshot.key();
-    records.set(record.key, record);
-    // We add a copy to the searchable index
-    index.add(record);
-    // Then we redraw the table
-    draw_table();
-    });
-
-// This method is called anytime something is changed in the database
-database.on("child_changed", function(snapshot) {
-    // We update our local copy of the data
-    var record = snapshot.val();
-    record.key = snapshot.key();
-    records.set(record.key, record);
-    // We update the copy in the searchable index
-    index.update(record);
-    // We redraw the table
-    draw_table();
-    });
-
-// This method is called anytime something is deleted from the database
-database.on("child_removed", function(snapshot) {
-    // We remove the data from the searchable index
-    index.remove(records.get(snapshot.key()));
-    // We remove our local copy
-    records.remove(snapshot.key());
-    // We redraw the table
-    draw_table();
-    });
-
-
-// Used to sort two records in the data
-var sortRecord = function(a, b) {
-  if(a.acronym.toLowerCase() == b.acronym.toLowerCase()) { return 0; }
-  return (a.acronym.toLowerCase() < b.acronym.toLowerCase() ? -1 : 1);
-}
-
-// This fills out the table so that it matches the contents of the records map
-// We use d3, see http://d3js.org/
-var draw_table = function() {
-  var r, new_record, new_controls, data;
-  if(records_to_show == undefined) {
-    data = records.values().slice(record_to_start_at, record_to_start_at + records_per_page);
-  } else {
-    data = records_to_show;
+  tr.entry.hide {
+    display: none;
   }
+  tr:nth-child(even) { background-color: #e4ca00; }
+</style>
+<body>
+  <h1>List of codes in UK TIMES</h1>
+  <p>Read the <a href='README.md'>instructions</a> on how to edit this</p>.
+  <div>
+    Filter: <input type='text' id='filter' placeholder='Filter...' autocomplete='off' autofocus>
+    <a href='/' id='showall'>Show all</a>
+  </div>
+  <table>
+    <thead>
+    <tr class='header'><th>Code</th><th>Short description</th><th>Long description</th></tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <script>
   
-  // Select all rows in the table and compare it with the records set
-  r = d3.select("#acronyms tbody").selectAll('tr.record')
-    .data(data, function(d) { return d.key; })
-    .order();
+  // We create a searchable index of all the records
+  // See http://lunrjs.com
+  var index = lunr(function () {
+      this.field('Code', {boost: 10});
+      this.field('Short', {boost: 5});
+      this.field('Long');
+      this.ref('Code');
+      this.pipeline.reset();
+      });
 
-  // Add a row for anything that is in records but not yet drawn
-  new_record = r.enter().append('tr')
-    .attr('id', function(d) { return d.key; })
-    .attr('class', 'record');
+  // This loads the data and draws the table
+  d3.tsv("codes.tsv").get(function(error, rows) {
+    
+    var rows = d3.select("tbody").selectAll("tr.entry")
+                    .data(rows);
+      
+    var new_rows = rows.enter().append("tr")
+                    .attr("class", "entry")
+                    .attr("id", function(d) { return "code_"+d["Code"]; });
 
-  // In each row, add cells for the acronym, other acronyms that refer to the same thing, and the description
-  new_record.append('td').attr('class', 'acronym');
-  new_record.append('td').attr('class', 'alias');
-  new_record.append('td').attr('class', 'description');
-
-  // Then add a column with controls
-  new_controls = new_record.append('td').attr('class', 'control');
-  new_controls.append('input').attr({id: 'edit', type: 'submit', value: 'edit'}).on('click', function(d) { edit(d); });
-  new_controls.append('input').attr({id: 'delete', type: 'submit', value: 'delete'}).on('click', function(d) { maybe_delete(d); });
-
-  // Update the contents of each row to match the record
-  r.select('.acronym').text(function(d) { return d.acronym; });
-  r.select('.alias').text(function(d) { return d.alias; });
-  r.select('.description').text(function(d) { return d.description; });
-
-  // Remove rows that relate to records that have been deleted
-  r.exit().remove()
-};
-
-// These wire up the next and previous buttons
-d3.select("#next").on('click', function() {
-    record_to_start_at = record_to_start_at + records_per_page;
-    if(record_to_start_at >= records.size()) {
-      record_to_start_at = 0;
-      }
-    draw_table();
-    d3.event.preventDefault();
-    });
-
-d3.select("#previous").on('click', function() {
-    record_to_start_at = record_to_start_at - records_per_page;
-    if(record_to_start_at < 0) {
-      record_to_start_at = records.size()-records_per_page;
-      }
-    draw_table();
-    d3.event.preventDefault();
-    });
-
-
-// This wires up the signin link
-// We take advantage of the firebase.com database authentication system
-d3.select("#signin").on('click', function() { 
-    database.authWithOAuthRedirect("github", function(error) { console.log(error); });
-    draw_table();
-    d3.event.preventDefault();
-    });
-
-// This wires up the signout link
-d3.select("#signout").on('click', function() { database.unauth(); d3.event.preventDefault() });
-
-// This wires up the add button
-d3.select('#add').on('click', function() {
-    // Read the contents of the form
-    var acronym = d3.select('#acronymInput').node().value;
-    var alias = d3.select('#aliasInput').node().value;
-    var description = d3.select('#descriptionInput').node().value;
-    // Prepare our record
-    var record = {acronym: acronym, alias: alias, description: description};
-    // Send it to the database
-    database.push(record);
-    // Clear out the form
-    d3.select('#acronymInput').node().value = "";
-    d3.select('#aliasInput').node().value = "";
-    d3.select('#descriptionInput').node().value = "";
-    // But also filter so record appears
-    d3.select("#filter").node().value = acronym; // Set the filter input box
-    d3.select("#filter").on("keyup")(); // Trigger the filter
-    d3.event.preventDefault();
-    });
-
-// This wires up the search box
-d3.select("#filter").on('keyup', function() { 
+    // Adds the record to the search index
+    new_rows.each(function(d) { index.add(d)})
+    
+    new_rows.append("td").attr("class", "code");
+    new_rows.append("td").attr("class", "short");
+    new_rows.append("td").attr("class", "long");
+  
+    rows.select("td.code").text(function(d) { return d["Code"] });
+    rows.select("td.short").text(function(d) { return d["Short"] });
+    rows.select("td.long").text(function(d) { return d["Long"] });
+    
+    rows.exit().remove();
+  });
+  
+  // This wires up the search box
+  d3.select("#filter").on('keyup', function() { 
     // Clear the search if the user presses escape
     if(d3.event.keyCode == 27) { clear_filter(); return; }
 
     // Get the search term the user has input
     var term = d3.select("#filter").node().value;
-    if(term.length < 3) {
-      // If the search term is empty or short, show everything
-      d3.select("body").classed('filter', false);
-      records_to_show = undefined;
-      draw_table();
-    } else {
-      // Otherwise, change a class to signal we are filtering the results
-      // This hides all rows in the table that don't have a 'show' class
-      d3.select("body").classed('filter', true);
-      // Then remove any existing records that are being shown
-      d3.selectAll(".record.show").classed('show', false);
-      // Then look through the results and give each of the found
-      // results a 'show' filter
-      records_to_show = [];
-      index.search(term).forEach(function(result) {
-        records_to_show.push(records.get(result.ref));
-        });
-      }
-      draw_table();
-    d3.event.preventDefault();
-    });
-
-// This wires up the 'cross' on the search box
-d3.select('#showall').on('click', function() { clear_filter(); d3.event.preventDefault(); return; });
-
-var clear_filter = function() {  
-    // THis has the effect of showing all the table rows
-    d3.select("body").classed('filter', false);
-    // This undoes the effect of the search
-    records_to_show = undefined;
-    // This clears the search box
-    d3.select("#filter").node().value = "";
-    // This redraws the table
-    draw_table();
-    d3.event.preventDefault();
-    };
-
-// This is used to reset the are you sure about deleting button if the user does nothing
-var delete_timeout;
-
-// This wires up the delete button to check the user is sure
-var maybe_delete = function(d) {
-  // Find the record we are dealing with
-  var record = d3.select("tr.record#"+d.key);
-  // Change the control to confirm the user is sure
-  record.select('input#delete')
-    .attr('value', 'Click again if you are sure you want to delete')
-    .on('click', function(d) { 
-        window.clearTimeout(delete_timeout);
-        // We do this in order to clear the search if we have just found this record
-        d = records.get(d.key);
-        if(d.acronym == d3.select("#filter").node().value) {
-          d3.select("#filter").node().value = "";
+    
+    if(term.length == 0) {
+      // If the search term is empty show everything
+      d3.selectAll(".entry.hide").classed('hide', false);
+    } else if(term.length == 1) {
+      // If it is short, just match the first couple of letters of the code
+      d3.selectAll("tr.entry").each(function(d) {
+        var row = d3.select(this);
+        if(d.Code[0] != term) {
+          row.classed("hide", true);
         }
-        // This removes any record
-        database.child(d.key).remove(); 
-        d3.select("#filter").on("keyup")(); // Need to re-trigger any filters
-    });
-  // Set a timeout to revert the control back to normal if the user doesn't confirm withing 4 seconds
-  delete_timeout = window.setTimeout(function() { 
-      record.select('input#delete')
-        .attr('value', 'delete')
-        .on('click', function(d) { 
-          maybe_delete(d); 
-        }) 
-      }, 
-      4000); // 4 seconds in milliseconds
-}
+      });
+    } else if(term.length == 2) {
+      // If it is short, just match the first couple of letters of the code
+      d3.selectAll("tr.entry").each(function(d) {
+        var row = d3.select(this);
+        if(d.Code[0] != term[0] || d.Code[1] != term[1]) {
+          row.classed("hide", true);
+        }
+      });
+    } else {
+      // Hide all the rows
+      d3.selectAll(".entry").classed('hide', true);
+      // Then look through the results and removes
+      // the hide label on each of the matching rows
+      index.search(term).forEach(function(result) {
+        d3.select("tr#code_"+result.ref).classed("hide", false);
+      });
+    }
+    d3.event.preventDefault();
+  });
 
-// This wires up the edit button
-var edit = function(d) {
-  // Find the record we are talking about
-  var record = d3.select("tr.record#"+d.key);
 
-  // Change the edit control into a save control
-  record.select('.control input#edit').attr('value', 'save').on('click', function(d) { save(d) });
+  var clear_filter = function() {  
+    // This undoes the effect of the search
+    d3.selectAll(".entry.hide").classed('hide', false);
+     // This clears the search box
+    d3.select("#filter").node().value = "";
+  };
 
-  // Replace the elements with input boxes
-  record.select('td.acronym').text("");
-  record.select('td.acronym').append('input').attr({type:'text', value: d.acronym});
+  d3.select('#showall').on('click', function() { clear_filter(); d3.event.preventDefault(); return; });
 
-  record.select('td.alias').text("");
-  record.select('td.alias').append('input').attr({type:'text', value: d.alias});
-
-  record.select('td.description').text("");
-  record.select('td.description').append('input').attr({type:'text', value: d.description });
-}
-
-// This wires up the save button
-var save = function(d) {
-  // Find the record we are talking about
-  var record = d3.select("tr.record#"+d.key);
-
-  // Get the updated data from the form
-  d.acronym = record.select('td.acronym input').node().value;
-  d.alias = record.select('td.alias input').node().value;
-  d.description = record.select('td.description input').node().value;
-
-  // Save it
-  database.child(d.key).update(d);
-
-  // Turn the save button back into an edit button
-  record.select('.control input#edit').attr('value', 'edit').on('click', function(d) { edit(d) });
-
-  // Remove the form
-  record.selectAll('td.acronym input, td.alias input, td.description input').remove();
-}
-
-</script>
-
+  </script>
 </body>
 </html>

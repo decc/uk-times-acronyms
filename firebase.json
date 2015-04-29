@@ -1,9 +1,0 @@
-{
-  "firebase": "uk-times-acronyms",
-  "public": ".",
-  "ignore": [
-    "firebase.json",
-    "**/.*",
-    "**/node_modules/**"
-  ]
-}
