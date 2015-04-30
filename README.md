@@ -13,21 +13,9 @@ To create one from scratch:
 ### On PC Excel 
 
 1. Download [this query file](https://decc.github.io/uk-times-acronyms/uk_times_acronyms.iqy)
-2. In Excel, create a new, blank, worksheet
-3. choose the 'Data' ribbon, 
-4. choose 'Connections'
-5. choose 'Add...'
-6. choose 'Browse for more'
-7. choose the downloaded query file (uk_times_acronyms.iqy) and click 'Open'
-8. click Close
-9. on the Data ribbon, choose 'Existing Connections'
-10. Select 'uk_times_acronyms'
-11. Click 'Open'
-12. Choose where to put it, and click 'ok'
-
-
-4. Choose the uk_times_acronyms.iqy from wherever you saved it.
-5. Click 'ok'
+2. Open it (either during the download, or by double clicking it)
+3. If promoted with a security concern, 'Enable'
+4. Right click on the worksheet tab and 'Move or Copy' it to the workbook you want it to be part of
 
 ### On Mac Excel 2011
 
