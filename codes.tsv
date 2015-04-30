@@ -1,13 +1,13 @@
 Code	Short	Long
-ACCOMPOST01	Mitigation option for crop-related N2O emissions: Composts and better fertilisation timing	Mitigation option for crop-related N2O emissions: Composts and better fertilisation timing
-ACDRAIN01	Mitigation option for crop-related N2O emissions: Drainage	Mitigation option for crop-related N2O emissions: Drainage
-ACFERT01	Mitigation option for crop-related N2O emissions: Improved fertilisation management	Mitigation option for crop-related N2O emissions: Improved fertilisation management
-ACNEWSPEC01	Mitigation option for crop-related N2O emissions: New species introduction	Mitigation option for crop-related N2O emissions: New species introduction
-ACNINHIBIT01	Mitigation option for crop-related N2O emissions: Nitrogen inhibitors	Mitigation option for crop-related N2O emissions: Nitrogen inhibitors
-ACTILLAGE01	Mitigation option for crop-related N2O emissions: Reduced tillage	Mitigation option for crop-related N2O emissions: Reduced tillage
-ADISTELC00	Existing electricity distribution network to the agricultural sector	Existing electricity distribution network to the agricultural sector
-ADISTELC01	New electricity distribution network to the agricultural sector	New electricity distribution network to the agricultural sector
-AELC	Electricity demand in the agricultural sector (in PJ)	Electricity demand in the agricultural sector (in PJ)
+ACCOMPOST01	Composts and better fertilisation timing	Mitigation option for crop-related N2O emissions: Composts and better fertilisation timing
+ACDRAIN01	Better crop drainage	Mitigation option for crop-related N2O emissions: Drainage
+ACFERT01	Improved fertilisation management	Mitigation option for crop-related N2O emissions: Improved fertilisation management
+ACNEWSPEC01	New species introduction	Mitigation option for crop-related N2O emissions: New species introduction
+ACNINHIBIT01	Nitrogen inhibitors	Mitigation option for crop-related N2O emissions: Nitrogen inhibitors
+ACTILLAGE01	Reduced tillage	Mitigation option for crop-related N2O emissions: Reduced tillage
+ADISTELC00	Existing electricity distribution (agricultural)	Existing electricity distribution network to the agricultural sector
+ADISTELC01	New electricity distribution (agricultural)	New electricity distribution network to the agricultural sector
+AELC	Electricity demand (agricultural)	Electricity demand in the agricultural sector (in PJ)
 AELC00	Existing generic electricity consuming technology (Efficiency =1)	Existing generic electricity consuming technology (Efficiency =1)
 AELC01	New generic electricity consuming technology (Efficiency =1)	New generic electricity consuming technology (Efficiency =1)
 AFV	alternative fuel vehicle	alternative fuel vehicle
