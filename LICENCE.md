@@ -2,6 +2,7 @@
 
 * lunr.min.js - &copy; 2014 Oliver Nightingale - MIT Licensed
 * d3.min.js - &copy; 2010-2015, Michael Bostock - https://github.com/mbostock/d3/blob/master/LICENSE
+* codes.tsv - &copy; A range of authors, including people at UCL, DECC
 
 All other code is &copy; 2015 Tom Counsell and distributed under the MIT licence: http://www.opensource.org/licenses/mit-license.php
 
