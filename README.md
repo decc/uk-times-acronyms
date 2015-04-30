@@ -2,11 +2,11 @@
 
 This is the source code to a simple application that makes it quick to look up all the codes and acronyms that are used in the 'UK TIMES' energy system model.
 
-https://decc.github.io/uk-times-acronyms
+See https://decc.github.io/uk-times-acronyms for an online version.
 
 ## Using the list from Excel
 
-You can download an [example excel file](ttps://raw.githubusercontent.com/decc/uk-times-acronyms/master/example.xlsx).
+You can download an [example excel file](./example.xlsx).
 
 To create one from scratch:
 
@@ -15,7 +15,7 @@ To create one from scratch:
 1. Create a new, blank worksheet
 2. Click on the 'data' ribbon
 3. Click on the 'html' button
-4. Open this url https://raw.githubusercontent.com/decc/uk-times-acronyms/master/codes.tsv
+4. Open this url https://decc.github.io/uk-times-acronyms/codes.tsv
 5. Done
 
 ### On Mac Excel 2011
