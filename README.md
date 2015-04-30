@@ -6,21 +6,32 @@ See https://decc.github.io/uk-times-acronyms for an online version.
 
 ## Using the list from Excel
 
-You can download an [example excel file](./example.xlsx).
+You can download an [example excel file](https://decc.github.io/uk-times-acronyms/example.xlsx).
 
 To create one from scratch:
 
 ### On PC Excel 
 
-1. Create a new, blank worksheet
-2. Click on the 'data' ribbon
-3. Click on the 'html' button
-4. Open this url https://decc.github.io/uk-times-acronyms/codes.tsv
-5. Done
+1. Download [this query file](https://decc.github.io/uk-times-acronyms/uk_times_acronyms.iqy)
+2. In Excel, create a new, blank, worksheet
+3. choose the 'Data' ribbon, 
+4. choose 'Connections'
+5. choose 'Add...'
+6. choose 'Browse for more'
+7. choose the downloaded query file (uk_times_acronyms.iqy) and click 'Open'
+8. click Close
+9. on the Data ribbon, choose 'Existing Connections'
+10. Select 'uk_times_acronyms'
+11. Click 'Open'
+12. Choose where to put it, and click 'ok'
+
+
+4. Choose the uk_times_acronyms.iqy from wherever you saved it.
+5. Click 'ok'
 
 ### On Mac Excel 2011
 
-1. Download [this query file](./uk_times_acronyms.iqy)
+1. Download [this query file](https://decc.github.io/uk-times-acronyms/uk_times_acronyms.iqy)
 2. In Excel, create a new, blank, worksheet
 3. choose the 'data' menu, then 'get external data'
 4. Choose the uk_times_acronyms.iqy from wherever you saved it.
