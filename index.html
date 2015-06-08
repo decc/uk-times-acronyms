@@ -37,8 +37,14 @@
       this.field('Short', {boost: 5});
       this.field('Long');
       this.ref('Code');
-      //this.pipeline.reset();
+      this.pipeline.reset();
       });
+
+  // We need to convert a code into a valid id
+  var id_for_code = function(code) {
+    return "code_"+code.replace(/[^a-z0-9]+/ig,'_');
+
+  }
 
   // This loads the data and draws the table
   d3.tsv("codes.tsv").get(function(error, rows) {
@@ -48,7 +54,7 @@
       
     var new_rows = rows.enter().append("tr")
                     .attr("class", "entry")
-                    .attr("id", function(d) { return "code_"+d["Code"]; });
+                    .attr("id", function(d) { return id_for_code(d["Code"]); });
 
     // Adds the record to the search index
     new_rows.each(function(d) { index.add(d)})
@@ -97,7 +103,7 @@
       // Then look through the results and removes
       // the hide label on each of the matching rows
       index.search(term).forEach(function(result) {
-        d3.select("tr#code_"+result.ref).classed("hide", false);
+        d3.select("tr#"+id_for_code(result.ref)).classed("hide", false);
       });
     }
     d3.event.preventDefault();
